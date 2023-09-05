@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "app-name"
+name = "openai_api_wrapper"
 version = "0.1.0"
 description = "A beautiful description."
 authors = ["Reinder Vos de Wael <reinder.vosdewael@childmind.org>"]
 license = "LGPL-2.1"
 readme = "README.md"
-packages = [{include = "APP_NAME", from = "src"}]
+packages = [{include = "openai_api_wrapper", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
+openai = "^0.28.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.3.2"
@@ -23,6 +24,9 @@ pdoc = "^14.0.0"
 
 [tool.poetry.extras]
 docs = ["pdoc"]
+
+[tool.poetry.scripts]
+openai_api = "openai_api_wrapper.cli:main"
 
 [build-system]
 requires = ["poetry-core>=1.2.0"]
