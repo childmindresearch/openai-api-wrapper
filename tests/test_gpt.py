@@ -50,7 +50,7 @@ def test_chat_completion_no_messages_or_prompt() -> None:
     """
     with pytest.raises(pydantic.ValidationError):
         chat_completion.ChatCompletion(
-            api_key="123", model="gpt4", system_prompt="", messages=[]
+            api_key="123", model="gpt-4", system_prompt="", messages=[]
         )
 
 
@@ -61,7 +61,7 @@ def test_chat_completion_both_messages_and_prompt() -> None:
     with pytest.raises(pydantic.ValidationError):
         chat_completion.ChatCompletion(
             api_key="123",
-            model="gpt4",
+            model="gpt-4",
             system_prompt="Hello there!",
             messages=[chat_completion.Message(role="user", content="Hi!")],
         )
@@ -71,7 +71,7 @@ def test_chat_completion_add_message() -> None:
     """Tests that a message can be added to the chat completion."""
     messages = [chat_completion.Message(role="system", content="Hi!")]
     chat = chat_completion.ChatCompletion(
-        api_key="123", model="gpt4", messages=messages
+        api_key="123", model="gpt-4", messages=messages
     )
     new_message = chat_completion.Message(role="user", content="How are you?")
     expected = messages + [new_message]
@@ -88,7 +88,7 @@ def test_chat_completion_prompt(
     mocker.patch("openai.ChatCompletion.create", return_value=response)
     chat = chat_completion.ChatCompletion(
         api_key="123",
-        model="gpt4",
+        model="gpt-4",
         system_prompt="Hello there!",
     )
     chat.add_message(role="user", content="Hi!")

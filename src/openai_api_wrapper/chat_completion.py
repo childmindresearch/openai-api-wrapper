@@ -46,7 +46,7 @@ class Message:
         """
         return f"{self.role}: {self.content}"
 
-    @pydantic.validator("role")
+    @pydantic.field_validator("role")
     def role_is_valid(cls, role: str) -> str:
         """Validates the role of the message sender.
 
