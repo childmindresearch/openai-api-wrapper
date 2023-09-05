@@ -78,7 +78,7 @@ class ChatCompletion(pydantic.BaseModel, extra="forbid"):
     """
 
     api_key: pydantic.SecretStr = pydantic.Field(
-        pydantic.SecretStr(os.environ["OPENAI_API_KEY"]),
+        pydantic.SecretStr(os.environ.get("OPENAI_API_KEY")),  # type: ignore[arg-type]
         description="Your openAI API key.",
         frozen=True,
     )
