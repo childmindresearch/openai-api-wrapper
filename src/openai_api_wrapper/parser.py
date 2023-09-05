@@ -4,13 +4,11 @@ import argparse
 import logging
 import pathlib
 
-from openai_api_wrapper import logs
+from openai_api_wrapper import constants, logs
 
 LOGGER_NAME = logs.LOGGER_NAME
 
 logger = logging.getLogger(LOGGER_NAME)
-
-SUPPORTED_MODELS = {"gpt4", "gpt-4-32k", "gpt-3.5-turbo", "gpt-3.5-turbo-16k"}
 
 
 def get_parser() -> argparse.ArgumentParser:
@@ -40,7 +38,7 @@ def get_parser() -> argparse.ArgumentParser:
         "model",
         type=str,
         help="The model to use for the API call",
-        choices=SUPPORTED_MODELS,
+        choices=constants.SUPPORTED_MODELS,
     )
     chat_completion_group.add_argument(
         "--message",
