@@ -11,8 +11,8 @@ def main() -> None:
         response = chat_completion.cli_entrypoint(
             api_key=args.api_key,
             model=args.model,
-            system_prompt=args.system_prompt,
             messages=args.message,
+            messages_file=args.messages_file,
         )
     else:
         raise NotImplementedError(

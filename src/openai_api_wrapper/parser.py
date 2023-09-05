@@ -2,6 +2,7 @@
 
 import argparse
 import logging
+import pathlib
 
 from openai_api_wrapper import logs
 
@@ -41,19 +42,17 @@ def get_parser() -> argparse.ArgumentParser:
         help="The model to use for the API call",
         choices=SUPPORTED_MODELS,
     )
-
-    chat_completion_group.add_argument(
-        "--system-prompt",
-        type=str,
-        help="The prompt to use for the system.",
-    )
     chat_completion_group.add_argument(
         "--message",
         type=str,
-        help="A message to add to the conversation. Can be used multiple times. Each message must start with 'user:' or 'assistant:'",
+        help="A message to add to the conversation. Can be used multiple times. The first message must start with 'system'. Each subsequent message must start with 'user:' or 'assistant:'",
         action="append",
     )
-
+    chat_completion_group.add_argument(
+        "--messages-file",
+        type=pathlib.Path,
+        help="A file containing messages to add to the conversation. Each message must start with 'user:' or 'assistant:'",
+    )
     optional_group.add_argument(
         "--api-key",
         type=str,

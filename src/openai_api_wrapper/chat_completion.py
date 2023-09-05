@@ -13,6 +13,8 @@ conversation history.
 # pylint: disable=no-self-argument
 import logging
 import os
+import pathlib
+import re
 from typing import Literal
 
 import openai
@@ -32,7 +34,7 @@ class Message:
         content: The content of the message.
     """
 
-    role: Literal["system", "user", "assistant"]
+    role: str
     content: str
 
     def __str__(self):
@@ -43,6 +45,26 @@ class Message:
                 format "{role}: {content}".
         """
         return f"{self.role}: {self.content}"
+
+    @pydantic.validator("role")
+    def role_is_valid(cls, role: str) -> str:
+        """Validates the role of the message sender.
+
+        Args:
+            role: The role of the message sender.
+
+        Raises:
+            ValueError: If the role is not one of "user", "assistant", or "system".
+
+        Returns:
+            str: The role of the message sender.
+        """
+        valid_roles = ("user", "assistant", "system")
+        if role in valid_roles:
+            return role
+        raise ValueError(
+            f"Role {role} is not supported. Supported roles are: {valid_roles}"
+        )
 
 
 class ChatCompletion(pydantic.BaseModel, extra="forbid"):
@@ -56,7 +78,9 @@ class ChatCompletion(pydantic.BaseModel, extra="forbid"):
     """
 
     api_key: pydantic.SecretStr = pydantic.Field(
-        description="Your openAI API key.", frozen=True
+        pydantic.SecretStr(os.environ["OPENAI_API_KEY"]),
+        description="Your openAI API key.",
+        frozen=True,
     )
     model: str = pydantic.Field("gpt4", description="The model to use.", frozen=True)
     system_prompt: str = pydantic.Field(
@@ -66,12 +90,6 @@ class ChatCompletion(pydantic.BaseModel, extra="forbid"):
         [],
         description="The messages to pre-load the API with.",
     )
-
-    @pydantic.field_validator("api_key")
-    def api_key_from_env(cls, api_key: pydantic.SecretStr | None) -> pydantic.SecretStr:
-        if api_key:
-            return api_key
-        return pydantic.SecretStr(os.environ["OPENAI_API_KEY"])
 
     @pydantic.field_validator("model")
     def model_is_supported(cls, model: str) -> str:
@@ -118,7 +136,7 @@ class ChatCompletion(pydantic.BaseModel, extra="forbid"):
         response = openai.ChatCompletion.create(
             model=self.model,
             messages=self._messages_as_dicts(),
-            api_key=self.api_key.get_secret_value(),
+            api_key=self.api_key.get_secret_value(),  # pylint: disable=no-member
         )
         self.add_message(
             role="assistant", content=response["choices"][0]["message"]["content"]
@@ -133,7 +151,12 @@ class ChatCompletion(pydantic.BaseModel, extra="forbid"):
         return [message.__dict__ for message in self.messages]
 
 
-def cli_entrypoint(api_key=None, model=None, system_prompt=None, messages=None):
+def cli_entrypoint(
+    api_key: str | None = None,
+    model: str | None = None,
+    messages: list[str] | None = None,
+    messages_file: pathlib.Path | None = None,
+):
     """Runs the CLI for the OpenAI API Wrapper.
 
     Args:
@@ -142,23 +165,42 @@ def cli_entrypoint(api_key=None, model=None, system_prompt=None, messages=None):
         model: The model to use for the API call. Must be one of the models
             listed in `SUPPORTED_MODELS`.
         system_prompt: The prompt to use for the system.
-        messages: A list of messages to add to the conversation. Each message
-            must be a string starting with "user:" or "assistant:".
+        messages: A list of messages to add to the conversation. The first message must start with 'system':.
+        Each subsequent message must be a string starting with "user:" or "assistant:".
+        messages_file: A file containing messages to add to the conversation.
     """
-    parsed_messages = [Message(role="system", content=system_prompt)]
-    if messages:
-        parsed_messages.extend(
-            [
-                Message(role=message.split(":")[0], content=message.split(":")[1])
-                for message in messages
-            ]
-        )
+    if messages and messages_file:
+        raise ValueError("You cannot provide both messages and a messages_file.")
+    if not messages and not messages_file:
+        raise ValueError("You must provide either messages or a messages_file.")
+
+    if messages_file:
+        messages_file_full = messages_file.absolute().resolve()
+        with open(messages_file_full, "r", encoding="utf-8") as file_buffer:
+            lines = file_buffer.readlines()
+        text = "\n".join(lines)
+        split_text = re.split(r"(user:|assistant:|system:)", text)
+        if len(split_text) < 3:
+            raise ValueError(
+                "Messages file must contain at least one message. Each message must start with 'user:', 'assistant:', or 'system:'."
+            )
+        parsed_messages = [
+            Message(role=role[:-1], content=content)
+            for role, content in zip(split_text[1::2], split_text[2::2])
+        ]
+    else:
+        parsed_messages = [
+            Message(
+                role=message.split(":")[0].strip(),
+                content=message.split(":")[1].strip(),
+            )
+            for message in messages  # type: ignore[union-attr]
+        ]
 
     logger.info("Initializing ChatCompletion object.")
-    chat_completion = ChatCompletion(
-        api_key=api_key,
-        model=model,
-        messages=parsed_messages,
-    )
+    args = {"model": model, "messages": parsed_messages}
+    if api_key:
+        args["api_key"] = api_key
+    chat_completion = ChatCompletion(**args)
     logger.info("Sending messages to API.")
     return chat_completion.prompt()
