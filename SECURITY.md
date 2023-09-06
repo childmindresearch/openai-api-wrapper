@@ -4,14 +4,7 @@ Child Mind Institute values the security of our users, data, and servers. We tak
 
 ## Supported Versions
 
-MODIFY:
-
-Note which version(s) will receive security updates. For example:
-
-| Version | Supported          |
-| ------- | ------------------ |
-| 1.0.x   | :white_check_mark: |
-| 0.9.x   | :x:                |
+Security updates will be applied to the latest version of the application. We encourage users to keep their applications up to date.
 
 ## Reporting Vulnerabilities
 
