@@ -20,7 +20,7 @@ def get_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="OpenAI API Wrapper",
         description="OpenAI API Wrapper",
-        epilog="Issues can be reported to: https://github.com/cmi-dair/openai-api-wrapper",
+        epilog="Issues can be reported to: https://github.com/childmindresearch/openai-api-wrapper",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
